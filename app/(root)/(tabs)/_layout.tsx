@@ -1,16 +1,34 @@
-import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
-import "../global.css"
+import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
+// import "../../../global.css";
 
 export default function TabLayout() {
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
+        <Icon sf="house.fill" />
         <Label>Home</Label>
-        <Icon sf="house.fill" drawable="custom_android_drawable" />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="settings">
-        <Icon sf="gear" drawable="custom_settings_drawable" />
-        <Label>Settings</Label>
+
+      <NativeTabs.Trigger name="search">
+        <Icon sf="magnifyingglass" />
+        <Label>Search</Label>
+      </NativeTabs.Trigger>
+
+      {/* {isAdmin && (
+        <NativeTabs.Trigger name="create">
+          <Icon sf="plus.circle.fill" />
+          <Label>Add Property</Label>
+        </NativeTabs.Trigger>
+      )} */}
+
+      <NativeTabs.Trigger name="saved">
+        <Icon sf="heart.fill" />
+        <Label>Saved</Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="profile">
+        <Icon sf="person.fill" />
+        <Label>Profile</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );

@@ -1,11 +1,14 @@
-import { Text } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import "../global.css";
+import { useAuth } from "@clerk/expo";
+import { Redirect } from "expo-router";
 
 export default function Index() {
-  return (
-    <SafeAreaView>
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </SafeAreaView>
-  );
+  const { isSignedIn, isLoaded } = useAuth();
+
+  if (!isLoaded) return null;
+
+  if (isSignedIn) return <Redirect href="/(root)/(tabs)" />;
+
+  return <Redirect href="/sign-in" />;
 }
+
+//  "babel-preset-expo": "^54.0.10", @57.0.3
