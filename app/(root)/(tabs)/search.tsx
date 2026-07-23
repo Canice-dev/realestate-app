@@ -1,9 +1,20 @@
+import FilterModal from "@/components/filterModal";
+import PropertyCard from "@/components/propertyCard";
+import { supabase } from "@/lib/supabase";
+import { formatPrice } from "@/lib/utils";
 import { useFilterStore } from "@/store/filterStore";
 import { Property } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Search() {
@@ -38,6 +49,38 @@ export default function Search() {
     minPrice !== null,
     maxPrice !== null,
   ].filter(Boolean).length;
+
+  // Remeber add trycatch block
+  const fetchResults = async () => {
+    setLoading(true);
+
+    let query = supabase.from("properties").select("*");
+
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,city.ilike.%${search}%`);
+    }
+
+    if (type) {
+      query = query.eq("type", type);
+    }
+
+    if (bedrooms) {
+      query = query.eq("bedrooms", bedrooms);
+    }
+
+    if (minPrice) {
+      query = query.gte("price", minPrice);
+    }
+
+    if (maxPrice) {
+      query = query.lte("price", maxPrice);
+    }
+
+    const { data } = await query.order("created_at", { ascending: false });
+
+    setResults(data ?? []);
+    setLoading(false);
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -75,6 +118,7 @@ export default function Search() {
 
           {/* Filter Button */}
           <TouchableOpacity
+            onPress={() => setShowFilters(true)}
             className={`w-12 h-12 rounded-2xl items-center justify-center ${
               activeFilterCount > 0 ? "bg-blue-600" : "bg-white"
             }`}
@@ -100,9 +144,89 @@ export default function Search() {
             )}
           </TouchableOpacity>
         </View>
-
-        {/* Results */}
       </View>
+
+      {/* Active Filter Chips */}
+      {activeFilterCount > 0 && (
+        <View className="flex-row flex-wrap gap-2 mt-3 px-2">
+          {type && (
+            <View className="flex-row items-center bg-blue-50 border border-blue-200 rounded-full px-3 py-1 gap-1">
+              <Text className="text-blue-700 text-xs font-semibold capitalize">
+                {type}
+              </Text>
+              <TouchableOpacity onPress={() => setType(null)}>
+                <Ionicons name="close" size={12} color="#1D4ED8" />
+              </TouchableOpacity>
+            </View>
+          )}
+          {bedrooms !== null && (
+            <View className="flex-row items-center bg-blue-50 border border-blue-200 rounded-full px-3 py-1 gap-1">
+              <Ionicons name="bed-outline" size={11} color="#1D4ED8" />
+              <Text className="text-blue-700 text-xs font-semibold">
+                {bedrooms === 4
+                  ? "4+ beds"
+                  : `${bedrooms} bed${bedrooms > 1 ? "s" : ""}`}
+              </Text>
+              <TouchableOpacity onPress={() => setBedrooms(null)}>
+                <Ionicons name="close" size={12} color="#1D4ED8" />
+              </TouchableOpacity>
+            </View>
+          )}
+          {(minPrice !== null || maxPrice !== null) && (
+            <View className="flex-row items-center bg-blue-50 border border-blue-200 rounded-full px-3 py-1 gap-1">
+              <Text className="text-blue-700 text-xs font-semibold">
+                {minPrice && maxPrice
+                  ? `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`
+                  : minPrice
+                    ? `From ${formatPrice(minPrice)}`
+                    : `Up to ${formatPrice(maxPrice!)}`}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setMinPrice(null);
+                  setMaxPrice(null);
+                }}
+              >
+                <Ionicons name="close" size={12} color="#1D4ED8" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      )}
+      {/* Results */}
+      <FlatList
+        data={results}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => <PropertyCard property={item} />}
+        ListHeaderComponent={
+          <Text className="text-sm text-gray-400 mb-4">
+            {loading ? "Searching..." : `${results.length} properties found`}
+          </Text>
+        }
+        ListEmptyComponent={
+          !loading ? (
+            <View className="items-center py-20">
+              <Ionicons name="search-outline" size={48} color="#D1D5DB" />
+              <Text className="text-gray-400 mt-4 text-base">
+                No properties found
+              </Text>
+              <Text className="text-gray-300 text-sm mt-1">
+                Try a different search or adjust filters
+              </Text>
+            </View>
+          ) : (
+            <ActivityIndicator size="large" color="#2563EB" className="py-20" />
+          )
+        }
+      />
+
+      {/* Filter Modal */}
+      <FilterModal
+        visible={showFilters}
+        onClose={() => setShowFilters(false)}
+      />
     </SafeAreaView>
   );
 }
