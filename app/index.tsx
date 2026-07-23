@@ -12,3 +12,5 @@ export default function Index() {
 }
 
 //  "babel-preset-expo": "^54.0.10", @57.0.3
+
+// @react-native-async-storage/async-storage@3.1.1 to 2.2.0
